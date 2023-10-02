@@ -22,7 +22,7 @@ export function alignListInCircularCoordinate(listCount: number, ray: number) {
 }
 
 export const createScreen = () => new THREE.Mesh(
-    new THREE.PlaneGeometry(0.75, 0.5),
+    new THREE.PlaneGeometry(1, 0.5),
     new THREE.MeshBasicMaterial({ color: getRandomFromList(colorList) })
 )
 

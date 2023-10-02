@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import * as THREE from 'three';
 import { ICoordenate2d, IDimension } from '../interfaces'
-import { colorList, getRandomFromList, alignListInCircularCoordinate, createScreens } from '../utils';
+import { colorList, getRandomFromList, alignListInCircularCoordinate, createScreens, createScreen, getCircleMoveAngle } from '../utils';
+import gsap from 'gsap';
 
 export default function RollXScene() {
 
@@ -15,24 +16,27 @@ export default function RollXScene() {
         const scene = new THREE.Scene();
 
         const roll = new THREE.Group()
-        
-        roll.position.z = -8
+
+        roll.position.z = 6
         roll.rotation.y = Math.PI
 
-        const screens = createScreens(6)
-        
-        const coordinates = alignListInCircularCoordinate(6, 3)
+        let rollCurrentRotation: number = roll.rotation.y
+        let rollTargetRotation: number = rollCurrentRotation
 
-        console.log(coordinates)
+        const rollScreenCount = 30
+
+        const screens = createScreens(rollScreenCount)
+
+        const coordinates = alignListInCircularCoordinate(rollScreenCount, 5)
 
         screens.forEach((screen, index) => {
             screen.position.x = coordinates[index].y
             screen.position.z = coordinates[index].x
 
             roll.add(screen)
-        }) 
+        })
 
-        scene.add(screens[0])
+        scene.add(roll)
 
         const effects = () => {
             window.addEventListener('mousemove', (event) => {
@@ -43,23 +47,22 @@ export default function RollXScene() {
             })
 
             window.addEventListener('keydown', (event) => {
-                if (event.key === 'ArrowRight') roll.rotation.y += Math.PI / 10
+                if (event.key === 'ArrowRight') rollTargetRotation  = rollCurrentRotation - getCircleMoveAngle(rollScreenCount)
+                if (event.key === 'ArrowLeft') rollTargetRotation  = rollCurrentRotation + getCircleMoveAngle(rollScreenCount)
 
-                if (event.key === 'ArrowLeft') roll.rotation.y -= Math.PI / 10
+                gsap.to(roll.rotation, {duration: 1, y: rollTargetRotation})
+                rollCurrentRotation = rollTargetRotation
             })
         }
 
         const animate = () => {
             requestAnimationFrame(animate);
 
-            // square.lookAt(camera.position)
-            // square2.lookAt(camera.position)
-            // square3.lookAt(camera.position)
+            screens.forEach(screen => screen.lookAt(camera.position))
+            camera.lookAt(screens[0].position)
 
             renderer.render(scene, camera);
         }
-
-        // console.log(alignListInCircularCoordinate(5, 5))
 
         return { effects, animate }
     }
@@ -87,6 +90,8 @@ export default function RollXScene() {
         renderer.setSize(displaySize.width, displaySize.height);
 
         camera = new THREE.PerspectiveCamera(75, displaySize.width / displaySize.height, 0.1, 1000);
+        camera.position.z = 0
+        camera.position.y = 0
     }
 
     useEffect(() => {
